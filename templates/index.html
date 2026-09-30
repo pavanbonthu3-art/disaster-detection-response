@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Disaster Response System</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- Feather Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     TOP NAV BAR
+════════════════════════════════════════════════════ -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-logo">
+      <span class="logo-icon">⚠</span>
+      <div>
+        <span class="logo-title">DISASTER RESPONSE</span>
+        <span class="logo-sub">Edge-AI Environmental Intelligence Network</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-center">
+    <div class="system-status" id="systemStatus">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Connecting…</span>
+    </div>
+  </div>
+
+  <div class="nav-right">
+    <div class="nav-time" id="navTime">--:--:--</div>
+    <div class="nav-date" id="navDate">Loading…</div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     OVERALL RISK BANNER  (shows when any hazard is HIGH/CRITICAL)
+════════════════════════════════════════════════════ -->
+<div class="risk-banner hidden" id="riskBanner">
+  <span class="banner-icon">🚨</span>
+  <span id="bannerText">ALERT</span>
+  <button class="banner-close" onclick="bannerDismissed = true; document.getElementById('riskBanner').classList.add('hidden')">✕</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN LAYOUT
+════════════════════════════════════════════════════ -->
+<main class="main-grid">
+
+  <!-- ───────────────────────────────────────────────
+       LEFT COLUMN  — Hazard panels
+  ──────────────────────────────────────────────── -->
+  <section class="hazard-grid">
+
+    <!-- ── FLOOD PANEL ── -->
+    <div class="hazard-card" id="card-flood">
+      <div class="card-header">
+        <div class="card-title-row">
+          <span class="hazard-icon flood-icon">🌊</span>
+          <div>
+            <h2 class="card-title">Flood Monitor</h2>
+            <p class="card-subtitle">Ultrasonic + Rain gauge · ESP32</p>
+          </div>
+        </div>
+        <div class="risk-badge" id="flood-badge">NORMAL</div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-box">
+          <span class="metric-label">Water Level</span>
+          <span class="metric-value" id="flood-wl">—</span>
+          <span class="metric-unit">m</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Rainfall</span>
+          <span class="metric-value" id="flood-rain">—</span>
+          <span class="metric-unit">mm/hr</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Rise Rate</span>
+          <span class="metric-value" id="flood-rate">—</span>
+          <span class="metric-unit">m/hr</span>
+        </div>
+      </div>
+
+      <div class="risk-row">
+        <div class="risk-label-col">
+          <span class="risk-label">Risk Score</span>
+          <span class="risk-pct" id="flood-pct">—%</span>
+        </div>
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-track">
+            <div class="risk-bar-fill" id="flood-bar"></div>
+          </div>
+        </div>
+        <div class="conf-label">Conf <span id="flood-conf">—</span></div>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="chart-flood"></canvas>
+      </div>
+    </div>
+
+    <!-- ── FOREST FIRE PANEL ── -->
+    <div class="hazard-card" id="card-fire">
+      <div class="card-header">
+        <div class="card-title-row">
+          <span class="hazard-icon fire-icon">🔥</span>
+          <div>
+            <h2 class="card-title">Forest Fire Monitor</h2>
+            <p class="card-subtitle">BME280 + Gas/Smoke · ESP32</p>
+          </div>
+        </div>
+        <div class="risk-badge" id="fire-badge">NORMAL</div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-box">
+          <span class="metric-label">Temperature</span>
+          <span class="metric-value" id="fire-temp">—</span>
+          <span class="metric-unit">°C</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Humidity</span>
+          <span class="metric-value" id="fire-hum">—</span>
+          <span class="metric-unit">%</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Smoke/Gas</span>
+          <span class="metric-value" id="fire-smoke">—</span>
+          <span class="metric-unit">ADC</span>
+        </div>
+      </div>
+
+      <div class="risk-row">
+        <div class="risk-label-col">
+          <span class="risk-label">Risk Score</span>
+          <span class="risk-pct" id="fire-pct">—%</span>
+        </div>
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-track">
+            <div class="risk-bar-fill" id="fire-bar"></div>
+          </div>
+        </div>
+        <div class="conf-label">Conf <span id="fire-conf">—</span></div>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="chart-fire"></canvas>
+      </div>
+    </div>
+
+    <!-- ── AIR QUALITY PANEL ── -->
+    <div class="hazard-card" id="card-air">
+      <div class="card-header">
+        <div class="card-title-row">
+          <span class="hazard-icon air-icon">💨</span>
+          <div>
+            <h2 class="card-title">Air Quality Monitor</h2>
+            <p class="card-subtitle">PMS5003 PM2.5/PM10 · ESP32</p>
+          </div>
+        </div>
+        <div class="risk-badge" id="air-badge">NORMAL</div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-box">
+          <span class="metric-label">PM2.5</span>
+          <span class="metric-value" id="air-pm25">—</span>
+          <span class="metric-unit">µg/m³</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">PM10</span>
+          <span class="metric-value" id="air-pm10">—</span>
+          <span class="metric-unit">µg/m³</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">AQI</span>
+          <span class="metric-value" id="air-aqi">—</span>
+          <span class="metric-unit aqi-label" id="air-aqi-label">—</span>
+        </div>
+      </div>
+
+      <div class="risk-row">
+        <div class="risk-label-col">
+          <span class="risk-label">Risk Score</span>
+          <span class="risk-pct" id="air-pct">—%</span>
+        </div>
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-track">
+            <div class="risk-bar-fill" id="air-bar"></div>
+          </div>
+        </div>
+        <div class="conf-label">Conf <span id="air-conf">—</span></div>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="chart-air"></canvas>
+      </div>
+    </div>
+
+    <!-- ── LANDSLIDE PANEL ── -->
+    <div class="hazard-card" id="card-landslide">
+      <div class="card-header">
+        <div class="card-title-row">
+          <span class="hazard-icon land-icon">⛰️</span>
+          <div>
+            <h2 class="card-title">Landslide Monitor</h2>
+            <p class="card-subtitle">Soil Moisture + MPU6050 · ESP32</p>
+          </div>
+        </div>
+        <div class="risk-badge" id="land-badge">NORMAL</div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-box">
+          <span class="metric-label">Soil Moisture</span>
+          <span class="metric-value" id="land-soil">—</span>
+          <span class="metric-unit">%</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Vibration</span>
+          <span class="metric-value" id="land-vib">—</span>
+          <span class="metric-unit">g</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Rainfall</span>
+          <span class="metric-value" id="land-rain">—</span>
+          <span class="metric-unit">mm/hr</span>
+        </div>
+      </div>
+
+      <div class="risk-row">
+        <div class="risk-label-col">
+          <span class="risk-label">Risk Score</span>
+          <span class="risk-pct" id="land-pct">—%</span>
+        </div>
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-track">
+            <div class="risk-bar-fill" id="land-bar"></div>
+          </div>
+        </div>
+        <div class="conf-label">Conf <span id="land-conf">—</span></div>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="chart-land"></canvas>
+      </div>
+    </div>
+
+  </section><!-- /hazard-grid -->
+
+  <!-- ───────────────────────────────────────────────
+       RIGHT COLUMN  — Alerts + Controls + Summary
+  ──────────────────────────────────────────────── -->
+  <aside class="right-panel">
+
+    <!-- ── OVERALL RISK SUMMARY ── -->
+    <div class="summary-card">
+      <h3 class="panel-title">Overall Risk Status</h3>
+      <div class="summary-grid">
+        <div class="summary-item" id="sum-flood">
+          <span class="sum-icon">🌊</span>
+          <div class="sum-info">
+            <span class="sum-name">Flood</span>
+            <span class="sum-level" id="sum-flood-level">—</span>
+          </div>
+          <span class="sum-pct" id="sum-flood-pct">—</span>
+        </div>
+        <div class="summary-item" id="sum-fire">
+          <span class="sum-icon">🔥</span>
+          <div class="sum-info">
+            <span class="sum-name">Forest Fire</span>
+            <span class="sum-level" id="sum-fire-level">—</span>
+          </div>
+          <span class="sum-pct" id="sum-fire-pct">—</span>
+        </div>
+        <div class="summary-item" id="sum-air">
+          <span class="sum-icon">💨</span>
+          <div class="sum-info">
+            <span class="sum-name">Air Quality</span>
+            <span class="sum-level" id="sum-air-level">—</span>
+          </div>
+          <span class="sum-pct" id="sum-air-pct">—</span>
+        </div>
+        <div class="summary-item" id="sum-land">
+          <span class="sum-icon">⛰️</span>
+          <div class="sum-info">
+            <span class="sum-name">Landslide</span>
+            <span class="sum-level" id="sum-land-level">—</span>
+          </div>
+          <span class="sum-pct" id="sum-land-pct">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCENARIO SIMULATOR ── -->
+    <div class="scenario-card">
+      <h3 class="panel-title">Scenario Simulator
+        <span class="panel-subtitle">Demo hazard escalation</span>
+      </h3>
+      <div class="scenario-buttons">
+        <button class="scenario-btn flood-btn"   onclick="triggerScenario('flood')">🌊 Flood</button>
+        <button class="scenario-btn fire-btn"    onclick="triggerScenario('fire')">🔥 Fire</button>
+        <button class="scenario-btn air-btn"     onclick="triggerScenario('air_quality')">💨 Air</button>
+        <button class="scenario-btn land-btn"    onclick="triggerScenario('landslide')">⛰️ Landslide</button>
+        <button class="scenario-btn clear-btn"   onclick="triggerScenario('clear')">✕ Clear</button>
+      </div>
+      <div class="scenario-status" id="scenarioStatus">No active scenario</div>
+    </div>
+
+    <!-- ── ESP32 DATA INGEST ── -->
+    <div class="ingest-card">
+      <h3 class="panel-title">ESP32 Node Ingest
+        <span class="panel-subtitle">POST /api/ingest</span>
+      </h3>
+      <div class="ingest-form">
+        <select id="ingestNode" class="ingest-input">
+          <option value="flood">Flood Node</option>
+          <option value="fire">Fire Node</option>
+          <option value="air_quality">Air Quality Node</option>
+          <option value="landslide">Landslide Node</option>
+        </select>
+        <textarea id="ingestPayload" class="ingest-textarea" rows="3" placeholder='{"water_level": 3.2, "rainfall": 55}'></textarea>
+        <button class="ingest-btn" onclick="sendIngest()">Send to System</button>
+        <span class="ingest-result" id="ingestResult"></span>
+      </div>
+    </div>
+
+    <!-- ── ALERT LOG ── -->
+    <div class="alert-card">
+      <div class="alert-header-row">
+        <h3 class="panel-title">Live Alert Log</h3>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="alert-count" id="alertCount">0 alerts</span>
+          <button class="clear-alerts-btn" id="clearAlertsBtn" onclick="clearAllAlerts()" title="Clear all alerts">Clear All</button>
+        </div>
+      </div>
+      <div class="alert-list" id="alertList">
+        <div class="no-alerts">No alerts — all systems normal</div>
+      </div>
+    </div>
+
+    <!-- ── NODE STATUS ── -->
+    <div class="node-card">
+      <h3 class="panel-title">Sensor Node Status</h3>
+      <div class="node-list">
+        <div class="node-item">
+          <span class="node-dot online"></span>
+          <span class="node-name">Flood Node — River Bank A</span>
+          <span class="node-ping" id="ping-flood">2s</span>
+        </div>
+        <div class="node-item">
+          <span class="node-dot online"></span>
+          <span class="node-name">Fire Node — Forest Zone B</span>
+          <span class="node-ping" id="ping-fire">2s</span>
+        </div>
+        <div class="node-item">
+          <span class="node-dot online"></span>
+          <span class="node-name">Air Node — Industrial Area</span>
+          <span class="node-ping" id="ping-air">2s</span>
+        </div>
+        <div class="node-item">
+          <span class="node-dot online"></span>
+          <span class="node-name">Landslide Node — Slope C</span>
+          <span class="node-ping" id="ping-land">2s</span>
+        </div>
+      </div>
+      <div class="comm-info">
+        <span class="comm-badge">LoRa</span>
+        <span class="comm-badge">Wi-Fi</span>
+        <span class="comm-badge">NB-IoT</span>
+        <span class="comm-badge">5G</span>
+      </div>
+    </div>
+
+  </aside><!-- /right-panel -->
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════
+     ALERT TOAST  (pops for critical events)
+════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <span>Edge-AI Multi-Hazard Environmental Intelligence Network · Problem Statement 26178</span>
+  <span>Sensors: ESP32 · BME280 · PMS5003 · MPU6050 · LoRaWAN</span>
+  <span id="footerUpdate">Last update: —</span>
+</footer>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
